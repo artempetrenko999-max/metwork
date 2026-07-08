@@ -33,6 +33,7 @@ exports.handler = async (event) => {
 
   const pixelId = process.env.PIXEL_ID;
   const accessToken = process.env.FB_TOKEN;
+  const testEventCode = process.env.FB_TEST_EVENT_CODE;
 
   if (!pixelId || !accessToken) {
     console.error('PIXEL_ID or FB_TOKEN is not set in environment variables');
@@ -53,34 +54,36 @@ exports.handler = async (event) => {
 
     const eventId = data.event_id || 'lead_' + Date.now() + '_' + Math.random().toString(36).slice(2);
 
-    const payload = {
-      data: [
-        {
-          event_name: 'Lead',
-          event_time: Math.floor(Date.now() / 1000),
-          event_id: eventId,
-          action_source: 'website',
-          event_source_url: data.event_source_url,
-          user_data: {
-            ph: normalizePhone(data.phone) ? [hash(normalizePhone(data.phone))] : undefined,
-            fn: data.name ? [hash(data.name)] : undefined,
-            client_ip_address: clientIp,
-            client_user_agent: userAgent,
-            fbc: fbc,
-            fbp: fbp,
-          },
-          custom_data: {
-            content_name: 'METWORK — Підставка для бутлів',
-            color: data.color,
-            utm_source: data.utm_source,
-            utm_medium: data.utm_medium,
-            utm_campaign: data.utm_campaign,
-            utm_content: data.utm_content,
-            utm_term: data.utm_term,
-          },
-        },
-      ],
+    const eventPayload = {
+      event_name: 'Lead',
+      event_time: Math.floor(Date.now() / 1000),
+      event_id: eventId,
+      action_source: 'website',
+      event_source_url: data.event_source_url,
+      user_data: {
+        ph: normalizePhone(data.phone) ? [hash(normalizePhone(data.phone))] : undefined,
+        fn: data.name ? [hash(data.name)] : undefined,
+        client_ip_address: clientIp,
+        client_user_agent: userAgent,
+        fbc: fbc,
+        fbp: fbp,
+      },
+      custom_data: {
+        content_name: 'METWORK — Підставка для бутлів',
+        color: data.color,
+        utm_source: data.utm_source,
+        utm_medium: data.utm_medium,
+        utm_campaign: data.utm_campaign,
+        utm_content: data.utm_content,
+        utm_term: data.utm_term,
+      },
     };
+
+    const payload = { data: [eventPayload] };
+
+    if (testEventCode) {
+      payload.test_event_code = testEventCode;
+    }
 
     const response = await fetch(
       `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`,
