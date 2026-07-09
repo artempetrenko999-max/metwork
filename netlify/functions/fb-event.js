@@ -26,6 +26,9 @@ function normalizePhone(phone) {
   return digits;
 }
 
+/* Дозволені типи подій — білий список, щоб хтось ззовні не міг відправити довільну подію */
+const ALLOWED_EVENTS = ['PageView', 'Lead'];
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -43,6 +46,9 @@ exports.handler = async (event) => {
   try {
     const data = JSON.parse(event.body || '{}');
 
+    /* Тип події: PageView або Lead. За замовчуванням — Lead (зворотна сумісність) */
+    const eventName = ALLOWED_EVENTS.includes(data.event_name) ? data.event_name : 'Lead';
+
     const cookieHeader = event.headers.cookie || event.headers.Cookie;
     const fbc = getCookieValue(cookieHeader, '_fbc');
     const fbp = getCookieValue(cookieHeader, '_fbp');
@@ -52,15 +58,18 @@ exports.handler = async (event) => {
       (event.headers['x-forwarded-for'] || '').split(',')[0].trim();
     const userAgent = event.headers['user-agent'];
 
-    const eventId = data.event_id || 'lead_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const eventId =
+      data.event_id ||
+      eventName.toLowerCase() + '_' + Date.now() + '_' + Math.random().toString(36).slice(2);
 
     const eventPayload = {
-      event_name: 'Lead',
+      event_name: eventName,
       event_time: Math.floor(Date.now() / 1000),
       event_id: eventId,
       action_source: 'website',
       event_source_url: data.event_source_url,
       user_data: {
+        /* ph/fn мають сенс тільки для Lead — для PageView просто будуть undefined і не потраплять у запит */
         ph: normalizePhone(data.phone) ? [hash(normalizePhone(data.phone))] : undefined,
         fn: data.name ? [hash(data.name)] : undefined,
         client_ip_address: clientIp,
@@ -71,6 +80,7 @@ exports.handler = async (event) => {
       custom_data: {
         content_name: 'METWORK — Підставка для бутлів',
         color: data.color,
+        /* UTM-мітки передаються завжди, для будь-якого типу події */
         utm_source: data.utm_source,
         utm_medium: data.utm_medium,
         utm_campaign: data.utm_campaign,
@@ -103,7 +113,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, event_id: eventId, fb_response: result }),
+      body: JSON.stringify({ success: true, event_id: eventId, event_name: eventName, fb_response: result }),
     };
   } catch (err) {
     console.error('fb-event function error:', err);
