@@ -810,12 +810,11 @@ body:has(#thankyou:target) main > section:not(#thankyou){
         new FormData(form).forEach(function (val, key) { data[key] = val; });
       } catch (fdErr) { /* ігноруємо */ }
 
-      /* 1. Надсилаємо на Apix-Drive вебхук (no-cors), у фоні */
+      /* 1. Надсилаємо на Apix-Drive вебхук, у фоні (Apix-Drive підтримує CORS) */
       try {
         fetch('https://s6.apix-drive.com/web-hooks/60092/phy1qutw', {
           method:  'POST',
-          mode:    'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
+          headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify(data)
         }).catch(function () {});
       } catch (fetchErr) {}
