@@ -810,12 +810,18 @@ body:has(#thankyou:target) main > section:not(#thankyou){
         new FormData(form).forEach(function (val, key) { data[key] = val; });
       } catch (fdErr) { /* ігноруємо */ }
 
-      /* 1. Надсилаємо на Apix-Drive вебхук, у фоні (Apix-Drive підтримує CORS) */
+      /* 1. Надсилаємо на Apix-Drive вебхук, у фоні (no-cors + form-urlencoded, без preflight) */
       try {
+        var apixParams = new URLSearchParams();
+        for (var apixKey in data) {
+          if (Object.prototype.hasOwnProperty.call(data, apixKey)) {
+            apixParams.append(apixKey, data[apixKey]);
+          }
+        }
         fetch('https://s6.apix-drive.com/web-hooks/60092/phy1qutw', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify(data)
+          method: 'POST',
+          mode:   'no-cors',
+          body:   apixParams
         }).catch(function () {});
       } catch (fetchErr) {}
 
