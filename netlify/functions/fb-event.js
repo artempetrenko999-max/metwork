@@ -29,9 +29,10 @@ function normalizePhone(phone) {
 /* Дозволені типи подій — білий список, щоб хтось ззовні не міг відправити довільну подію */
 const ALLOWED_EVENTS = ['PageView', 'Lead'];
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
   }
 
   const pixelId = process.env.PIXEL_ID;
@@ -40,23 +41,25 @@ exports.handler = async (event) => {
 
   if (!pixelId || !accessToken) {
     console.error('PIXEL_ID or FB_TOKEN is not set in environment variables');
-    return { statusCode: 500, body: JSON.stringify({ error: 'Missing PIXEL_ID or FB_TOKEN' }) };
+    res.status(500).json({ error: 'Missing PIXEL_ID or FB_TOKEN' });
+    return;
   }
 
   try {
-    const data = JSON.parse(event.body || '{}');
+    /* Vercel сам парсить JSON-тіло запиту в req.body, якщо Content-Type: application/json */
+    const data = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
 
     /* Тип події: PageView або Lead. За замовчуванням — Lead (зворотна сумісність) */
     const eventName = ALLOWED_EVENTS.includes(data.event_name) ? data.event_name : 'Lead';
 
-    const cookieHeader = event.headers.cookie || event.headers.Cookie;
+    const cookieHeader = req.headers.cookie;
     const fbc = getCookieValue(cookieHeader, '_fbc');
     const fbp = getCookieValue(cookieHeader, '_fbp');
 
     const clientIp =
-      event.headers['x-nf-client-connection-ip'] ||
-      (event.headers['x-forwarded-for'] || '').split(',')[0].trim();
-    const userAgent = event.headers['user-agent'];
+      req.headers['x-real-ip'] ||
+      (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    const userAgent = req.headers['user-agent'];
 
     const eventId =
       data.event_id ||
@@ -95,7 +98,7 @@ exports.handler = async (event) => {
       payload.test_event_code = testEventCode;
     }
 
-    const response = await fetch(
+    const fbResponse = await fetch(
       `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`,
       {
         method: 'POST',
@@ -104,19 +107,17 @@ exports.handler = async (event) => {
       }
     );
 
-    const result = await response.json();
+    const result = await fbResponse.json();
 
-    if (!response.ok) {
+    if (!fbResponse.ok) {
       console.error('Facebook CAPI error:', result);
-      return { statusCode: response.status, body: JSON.stringify(result) };
+      res.status(fbResponse.status).json(result);
+      return;
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ success: true, event_id: eventId, event_name: eventName, fb_response: result }),
-    };
+    res.status(200).json({ success: true, event_id: eventId, event_name: eventName, fb_response: result });
   } catch (err) {
     console.error('fb-event function error:', err);
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    res.status(500).json({ error: err.message });
   }
 };
