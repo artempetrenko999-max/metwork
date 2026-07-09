@@ -387,6 +387,58 @@
   @media (min-width:431px){
     :root{--side:28px;}
   }
+
+/* ---------- thank-you page ---------- */
+.thankyou-section{
+  display:none;
+  min-height:100svh;align-items:center;justify-content:center;
+  padding:64px var(--side) 56px;
+}
+/* CSS-фолбек: показує блок подяки навіть якщо JS не виконався (наприклад, Quick Look preview) */
+.thankyou-section:target{
+  display:flex;
+}
+body:has(#thankyou:target) main > section:not(#thankyou){
+  display:none;
+}
+.thankyou-card{
+  width:100%;text-align:center;position:relative;
+}
+.thankyou-icon{
+  width:76px;height:76px;margin:0 auto 28px;border-radius:50%;
+  background:radial-gradient(circle, rgba(79,124,240,.22), rgba(79,124,240,.04) 70%);
+  border:1px solid rgba(79,124,240,.4);
+  display:flex;align-items:center;justify-content:center;
+}
+.thankyou-icon svg{width:34px;height:34px;stroke:#4ee08a;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+.thankyou-title{
+  font-weight:200;font-size:clamp(1.7rem,7.5vw,2.2rem);line-height:1.22;
+  letter-spacing:.01em;color:var(--text-0);margin-bottom:18px;
+}
+.thankyou-text{
+  font-size:1rem;line-height:1.65;color:var(--text-1);max-width:360px;
+  margin:0 auto 40px;
+}
+.thankyou-info{
+  border:1px solid var(--line);border-radius:var(--radius);
+  padding:28px 24px;margin:0 auto 22px;max-width:360px;
+  background:linear-gradient(160deg, var(--graphite) 0%, var(--bg) 120%);
+  position:relative;overflow:hidden;
+}
+.thankyou-info p{font-size:.94rem;line-height:1.6;color:var(--text-1);margin-bottom:22px;}
+.btn-instagram{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  text-decoration:none;
+}
+.thankyou-response{
+  font-size:.78rem;color:var(--text-2);letter-spacing:.02em;
+  max-width:320px;margin:0 auto;line-height:1.6;
+}
+.thankyou-back{
+  display:inline-block;margin-top:32px;font-size:.78rem;color:var(--text-2);
+  letter-spacing:.06em;text-decoration:underline;text-underline-offset:3px;
+}
+
 </style>
 </head>
 <body>
@@ -622,7 +674,7 @@
       <h2>Готові оновити простір?</h2>
       <p>Залиште контакти — ми зв'яжемось і оформимо замовлення зі знижкою.</p>
 
-      <form class="order-form" id="orderForm" name="order" method="POST" data-netlify="true">
+      <form class="order-form" id="orderForm" name="order" method="POST" data-netlify="true" action="#thankyou">
         <input type="hidden" name="utm_source" value="">
         <input type="hidden" name="utm_medium" value="">
         <input type="hidden" name="utm_campaign" value="">
@@ -657,153 +709,249 @@
     </div>
   </section>
 
+  <!-- ================= THANK YOU (показується після відправки форми) ================= -->
+  <section class="thankyou-section" id="thankyou">
+    <div class="wrap">
+      <div class="thankyou-card reveal in-view">
+
+        <div class="thankyou-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><polyline points="4 12.5 9.5 18 20 6"></polyline></svg>
+        </div>
+
+        <h2 class="thankyou-title">Дякуємо! Вашу заявку<br>успішно отримано.</h2>
+        <p class="thankyou-text">Наш менеджер зв'яжеться з вами найближчим часом для уточнення деталей.</p>
+
+        <div class="thankyou-info">
+          <p>Поки очікуєте, перегляньте наші роботи, відгуки та новини в Instagram.</p>
+          <a class="btn btn-primary btn-instagram" href="https://instagram.com/metwork.group" target="_blank" rel="noopener noreferrer">📸 Перейти в Instagram</a>
+        </div>
+
+        <p class="thankyou-response">Зазвичай ми відповідаємо протягом 5–15 хвилин у робочий час.</p>
+
+        <a class="thankyou-back" href="#hero" id="thankyouBack">← Повернутись на головну</a>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 
 
 <script>
-  (function(){
-    var els = document.querySelectorAll('.reveal');
-    if(!('IntersectionObserver' in window)){
-      els.forEach(function(el){ el.classList.add('in-view'); });
-      return;
+  /* ==========================================================
+     КРИТИЧНА ЛОГІКА ФОРМИ — йде першою, щоб гарантовано
+     прив'язатись навіть якщо решта скрипта нижче впаде з помилкою.
+     ========================================================== */
+
+  function showThankYou(){
+    try {
+      var sections = document.querySelectorAll('main > section');
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].id !== 'thankyou') sections[i].style.display = 'none';
+      }
+      var ty = document.getElementById('thankyou');
+      if (ty) {
+        ty.style.display = 'flex';
+        ty.classList.add('in-view');
+      }
+      window.scrollTo(0, 0);
+    } catch (err) {
+      var ty2 = document.getElementById('thankyou');
+      if (ty2) ty2.style.display = 'flex';
     }
-    var io = new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        if(entry.isIntersecting){
-          entry.target.classList.add('in-view');
-          io.unobserve(entry.target);
-        }
+  }
+
+  function hideThankYou(){
+    var sections = document.querySelectorAll('main > section');
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].id !== 'thankyou') sections[i].style.display = '';
+    }
+    var ty = document.getElementById('thankyou');
+    if (ty) ty.style.display = 'none';
+    window.scrollTo(0, 0);
+  }
+
+  (function(){
+    var form = document.getElementById('orderForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      /* Mark all required fields as touched to show validation errors */
+      var inputs = form.querySelectorAll('input[required]');
+      for (var i = 0; i < inputs.length; i++) { inputs[i].classList.add('touched'); }
+
+      /* Stop if any required field is empty */
+      if (!form.checkValidity()) {
+        var first = form.querySelector('input[required]:invalid');
+        if (first) first.focus();
+        return;
+      }
+
+      var btn  = form.querySelector('button[type="submit"]');
+      var note = document.getElementById('orderFormNote');
+
+      if (btn) {
+        btn.disabled    = true;
+        btn.textContent = 'Відправка...';
+      }
+
+      /* КРИТИЧНО: показуємо блок подяки НЕГАЙНО, ще до будь-яких
+         мережевих запитів — це гарантує перехід незалежно від того,
+         чи спрацюють вебхуки (наприклад, у file:// режимі перегляду) */
+      showThankYou();
+
+      if (note) note.textContent = 'Дякуємо! Ми зв\u2019яжемось з вами найближчим часом.';
+
+      /* Збираємо всі поля форми в JSON (не блокує показ подяки) */
+      var data = {};
+      try {
+        new FormData(form).forEach(function (val, key) { data[key] = val; });
+      } catch (fdErr) { /* ігноруємо */ }
+
+      /* 1. Надсилаємо на Apix-Drive вебхук (no-cors), у фоні */
+      try {
+        fetch('https://s6.apix-drive.com/web-hooks/60092/phy1qutw', {
+          method:  'POST',
+          mode:    'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body:    JSON.stringify(data)
+        }).catch(function () {});
+      } catch (fetchErr) {}
+
+      /* 2. Facebook Conversions API через Netlify Function, у фоні */
+      try {
+        fetch('/.netlify/functions/fb-event', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(data)
+        }).catch(function () {});
+      } catch (fetchErr2) {}
+
+      if (btn) btn.textContent = '✓ Замовлення відправлено!';
+      form.reset();
+    });
+
+    var backLink = document.getElementById('thankyouBack');
+    if (backLink) {
+      backLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        hideThankYou();
       });
-    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-    els.forEach(function(el){ io.observe(el); });
+    }
   })();
 
-  /* ---- generic swipe-track <-> dots sync, reused by reviews and advantages/specs ---- */
-  function initSwipeDots(trackId, dotsId){
-    var track = document.getElementById(trackId);
-    var dotsWrap = document.getElementById(dotsId);
-    if(!track || !dotsWrap) return;
-    var cards = Array.prototype.slice.call(track.children);
-    var dots = Array.prototype.slice.call(dotsWrap.children);
+  /* ==========================================================
+     ДЕКОРАТИВНІ / ДОПОМІЖНІ СКРИПТИ — обгорнуті в try/catch,
+     щоб збій тут ніколи не міг зламати форму вище.
+     ========================================================== */
 
-    function setActive(i){
-      dots.forEach(function(d, idx){ d.classList.toggle('active', idx === i); });
-    }
+  try {
+    (function(){
+      var els = document.querySelectorAll('.reveal');
+      if(!('IntersectionObserver' in window)){
+        els.forEach(function(el){ el.classList.add('in-view'); });
+        return;
+      }
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if(entry.isIntersecting){
+            entry.target.classList.add('in-view');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+      els.forEach(function(el){ io.observe(el); });
+    })();
+  } catch (e) {}
 
-    var ticking = false;
-    function closestIndex(){
-      var trackCenter = track.scrollLeft + track.clientWidth / 2;
-      var closest = 0, minDist = Infinity;
-      cards.forEach(function(card, i){
-        var cardCenter = card.offsetLeft + card.offsetWidth / 2;
-        var dist = Math.abs(cardCenter - trackCenter);
-        if(dist < minDist){ minDist = dist; closest = i; }
+  try {
+    /* ---- generic swipe-track <-> dots sync, reused by reviews and advantages/specs ---- */
+    var initSwipeDots = function(trackId, dotsId){
+      var track = document.getElementById(trackId);
+      var dotsWrap = document.getElementById(dotsId);
+      if(!track || !dotsWrap) return;
+      var cards = Array.prototype.slice.call(track.children);
+      var dots = Array.prototype.slice.call(dotsWrap.children);
+
+      function setActive(i){
+        dots.forEach(function(d, idx){ d.classList.toggle('active', idx === i); });
+      }
+
+      var ticking = false;
+      function closestIndex(){
+        var trackCenter = track.scrollLeft + track.clientWidth / 2;
+        var closest = 0, minDist = Infinity;
+        cards.forEach(function(card, i){
+          var cardCenter = card.offsetLeft + card.offsetWidth / 2;
+          var dist = Math.abs(cardCenter - trackCenter);
+          if(dist < minDist){ minDist = dist; closest = i; }
+        });
+        return closest;
+      }
+      track.addEventListener('scroll', function(){
+        if(ticking) return;
+        ticking = true;
+        requestAnimationFrame(function(){
+          setActive(closestIndex());
+          ticking = false;
+        });
+      }, { passive: true });
+
+      dots.forEach(function(dot, i){
+        dot.addEventListener('click', function(){
+          cards[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        });
       });
-      return closest;
-    }
-    track.addEventListener('scroll', function(){
-      if(ticking) return;
-      ticking = true;
-      requestAnimationFrame(function(){
-        setActive(closestIndex());
-        ticking = false;
-      });
-    }, { passive: true });
+    };
+    initSwipeDots('reviewsTrack', 'reviewsDots');
+    initSwipeDots('advSpecsTrack', 'advSpecsDots');
+    initSwipeDots('interiorTrack', 'interiorDots');
+  } catch (e) {}
 
-    dots.forEach(function(dot, i){
-      dot.addEventListener('click', function(){
-        cards[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-      });
-    });
-  }
-  initSwipeDots('reviewsTrack', 'reviewsDots');
-  initSwipeDots('advSpecsTrack', 'advSpecsDots');
-  initSwipeDots('interiorTrack', 'interiorDots');
-
-  /* ---- color-picker tile highlighting (JS fallback for browsers without :has()) ---- */
-  (function(){
-    var options = document.querySelectorAll('.color-option');
-    if(!options.length) return;
-    function refresh(){
+  try {
+    /* ---- color-picker tile highlighting (JS fallback for browsers without :has()) ---- */
+    (function(){
+      var options = document.querySelectorAll('.color-option');
+      if(!options.length) return;
+      function refresh(){
+        options.forEach(function(opt){
+          var input = opt.querySelector('input[type="radio"]');
+          opt.classList.toggle('is-checked', !!(input && input.checked));
+        });
+      }
       options.forEach(function(opt){
         var input = opt.querySelector('input[type="radio"]');
-        opt.classList.toggle('is-checked', !!(input && input.checked));
+        if(input) input.addEventListener('change', refresh);
       });
-    }
-    options.forEach(function(opt){
-      var input = opt.querySelector('input[type="radio"]');
-      if(input) input.addEventListener('change', refresh);
-    });
-    refresh();
-  })();
+      refresh();
+    })();
+  } catch (e) {}
 
-  /* ---- Required field validation ---- */
-  (function () {
-    var inputs = document.querySelectorAll('#orderForm input[required]');
-    inputs.forEach(function (inp) {
-      inp.addEventListener('blur', function () {
-        inp.classList.add('touched');
+  try {
+    /* ---- Required field validation ---- */
+    (function () {
+      var inputs = document.querySelectorAll('#orderForm input[required]');
+      inputs.forEach(function (inp) {
+        inp.addEventListener('blur', function () {
+          inp.classList.add('touched');
+        });
       });
-    });
-  })();
+    })();
+  } catch (e) {}
 
-  /* ---- UTM → hidden fields ---- */
-  (function () {
-    var params = new URLSearchParams(window.location.search);
-    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function (key) {
-      var val = params.get(key);
-      var field = document.querySelector('input[name="' + key + '"]');
-      if (val && field) field.value = val;
-    });
-  })();
-
-  /* ---- Форма замовлення → вебхук Apix-Drive ---- */
-  document.getElementById('orderForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-
-    var form = this;
-
-    /* Mark all required fields as touched to show validation errors */
-    var inputs = form.querySelectorAll('input[required]');
-    inputs.forEach(function (inp) { inp.classList.add('touched'); });
-
-    /* Stop if any required field is empty */
-    if (!form.checkValidity()) {
-      var first = form.querySelector('input[required]:invalid');
-      if (first) first.focus();
-      return;
-    }
-    var btn  = form.querySelector('button[type="submit"]');
-    var note = document.getElementById('orderFormNote');
-
-    btn.disabled    = true;
-    btn.textContent = 'Відправка...';
-
-    /* Збираємо всі поля форми в JSON */
-    var data = {};
-    new FormData(form).forEach(function (val, key) { data[key] = val; });
-
-    /* 1. Надсилаємо на Apix-Drive вебхук (no-cors) */
-    fetch('https://s6.apix-drive.com/web-hooks/60092/phy1qutw', {
-      method:  'POST',
-      mode:    'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body:    JSON.stringify(data)
-    }).catch(function () {});
-
-    /* 2. Facebook Conversions API через Netlify Function (токен на сервері) */
-    fetch('/.netlify/functions/fb-event', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(data)
-    }).catch(function () {});
-
-    /* Показуємо успіх завжди */
-    btn.textContent = '✓ Замовлення відправлено!';
-    if (note) note.textContent = 'Дякуємо! Ми зв\u2019яжемось з вами найближчим часом.';
-    form.reset();
-  });
+  try {
+    /* ---- UTM → hidden fields ---- */
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function (key) {
+        var val = params.get(key);
+        var field = document.querySelector('input[name="' + key + '"]');
+        if (val && field) field.value = val;
+      });
+    })();
+  } catch (e) {}
 </script>
 
 </body>
