@@ -854,7 +854,7 @@ src="https://www.facebook.com/tr?id=3854392231508497&ev=PageView&noscript=1"
         leadPayload.event_name = 'Lead';
         leadPayload.event_source_url = window.location.href;
 
-        fetch('/.netlify/functions/fb-event', {
+        fetch('/api/fb-event', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify(leadPayload)
@@ -998,7 +998,7 @@ src="https://www.facebook.com/tr?id=3854392231508497&ev=PageView&noscript=1"
         utm_content:  params.get('utm_content')  || '',
         utm_term:     params.get('utm_term')     || ''
       };
-      fetch('/.netlify/functions/fb-event', {
+      fetch('/api/fb-event', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(payload)
