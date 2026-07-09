@@ -849,10 +849,15 @@ src="https://www.facebook.com/tr?id=3854392231508497&ev=PageView&noscript=1"
 
       /* 2. Facebook Conversions API через Netlify Function, у фоні */
       try {
+        var leadPayload = {};
+        for (var k in data) { if (Object.prototype.hasOwnProperty.call(data, k)) leadPayload[k] = data[k]; }
+        leadPayload.event_name = 'Lead';
+        leadPayload.event_source_url = window.location.href;
+
         fetch('/.netlify/functions/fb-event', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify(data)
+          body:    JSON.stringify(leadPayload)
         }).catch(function () {});
       } catch (fetchErr2) {}
 
@@ -977,6 +982,27 @@ src="https://www.facebook.com/tr?id=3854392231508497&ev=PageView&noscript=1"
         var field = document.querySelector('input[name="' + key + '"]');
         if (val && field) field.value = val;
       });
+    })();
+  } catch (e) {}
+
+  try {
+    /* ---- Facebook Conversions API: серверна подія PageView з UTM-мітками ---- */
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var payload = {
+        event_name: 'PageView',
+        event_source_url: window.location.href,
+        utm_source:   params.get('utm_source')   || '',
+        utm_medium:   params.get('utm_medium')   || '',
+        utm_campaign: params.get('utm_campaign') || '',
+        utm_content:  params.get('utm_content')  || '',
+        utm_term:     params.get('utm_term')     || ''
+      };
+      fetch('/.netlify/functions/fb-event', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload)
+      }).catch(function () {});
     })();
   } catch (e) {}
 </script>
